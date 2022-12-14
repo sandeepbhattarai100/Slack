@@ -1,31 +1,69 @@
 import { InfoOutlined, StarBorderOutlined } from '@mui/icons-material';
 import ChatInput from './ChatInput';
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { selectRoomId } from '../features/appSlice';
+import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
+import { db } from '../firebase';
+import MessageComponent from './MessageComponent';
 
 
 function Chat() {
+    const chatRef = useRef(null);
     const roomId = useSelector(selectRoomId);
+    const [roomDetails] = useDocument(
+        roomId && db.collection('rooms').doc(roomId)
+        
+    )
+    const [roomMessages,loading] = useCollection(
+        roomId &&
+        db.collection('rooms').doc(roomId).collection('messages').orderBy('timestamp', 'asc')
+    );
+
+    useEffect(() => {
+        chatRef?.current?.scrollIntoView({
+            behaviour: "smooth",
+            block: "nearest",
+            inline: "start"
+        });  
+    },[roomId,loading])
+
   return (
      
-          <ChatContainer>
-          <>
+      <ChatContainer>
+          {roomDetails && roomMessages && (
+              <>
               <Header>
                   <HeaderLeft>
-                      <h4>#Room-Name</h4>
+                      <h4>{roomDetails?.data().name}</h4>
                       <StarBorderOutlined/>
                   </HeaderLeft>
                   <HeaderRight>
                       <p><InfoOutlined/>Detailo</p>
                   </HeaderRight>
               </Header>
+
+              {roomMessages?.docs.map((doc) => {
+                  const { message, name, timestamp, userImage } = doc.data();
+                  return (
+                      <MessageComponent
+                          message={message}
+                          name={name}
+                          key={doc.id}
+                          timestamp={timestamp}
+                          userImage={userImage}
+                      />
+                  );
+              })}
               
-              <ChatInput ChannelId={ roomId} ChannelName="Sandyee" />
-          </>
+              <ChatInput chatRef={chatRef} ChannelId={ roomId} ChannelName={roomDetails?.data().name} />
+              <ChatBottom ref={chatRef}/>
+              </>
         
+          )}
+          
       </ChatContainer >
 
   )
@@ -67,4 +105,8 @@ const HeaderRight = styled.div`
     font-size:14px;
     margin-right:5px;
 }
+`;
+
+const ChatBottom = styled.div`
+padding-bottom:200px;
 `;

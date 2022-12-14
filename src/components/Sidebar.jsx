@@ -11,20 +11,23 @@ import AppsIcon from '@mui/icons-material/Apps';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { db } from '../firebase';
+import { auth, db } from '../firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 
 function Sidebar() {
     const [channels, loading, error] = useCollection(db.collection('rooms'));
+    const [user] = useAuthState(auth);
 
   return (
       <SidebarContainer>
           <SidebarHeader>
               <SidebarInfo>
-                 <h2> sandyee bhattarai</h2> 
+                  <h2>{user?.displayName}</h2> 
                   <h3>
                       <FiberManualRecordIcon />
-                      sandeep bhattarai
+                      {user?.displayName}
+                      
                   </h3> 
               </SidebarInfo>
               <CreateIcon/>
